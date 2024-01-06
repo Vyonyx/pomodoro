@@ -1,14 +1,41 @@
-import { Dispatch, useEffect, useRef, useState } from "react";
+import { ChangeEvent, Dispatch, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import Modal from "react-modal";
+
+Modal.setAppElement("#root");
+
+const modalStyles = {
+  overlay: {
+    backgroundColor: "transparent",
+  },
+  content: {
+    top: "50%",
+    left: "50%",
+    right: "auto",
+    bottom: "auto",
+    marginRight: "-50%",
+    transform: "translate(-50%, -50%)",
+    minWidth: "500px",
+    padding: "0px",
+  },
+};
 
 function App() {
   const [activeButton, setActiveButton] = useState("pomodoro");
+  const [initialTime, setInitialTime] = useState(10);
+  const [buttons, _] = useState([
+    { id: "pomodoro", label: "Pomodoro", duration: 25 },
+    { id: "short", label: "Short Break", duration: 10 },
+    { id: "long", label: "Long Break", duration: 45 },
+  ]);
+  const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  const buttons = [
-    { id: "pomodoro", label: "Pomodoro" },
-    { id: "short", label: "Short Break" },
-    { id: "long", label: "Long Break" },
-  ];
+  function openModal() {
+    setModalIsOpen(true);
+  }
+  function closeModal() {
+    setModalIsOpen(false);
+  }
 
   return (
     <>
@@ -24,15 +51,18 @@ function App() {
               id={button.id}
               label={button.label}
               active={activeButton}
-              click={setActiveButton}
+              click={() => {
+                setActiveButton(button.id);
+                setInitialTime(button.duration);
+              }}
             />
           ))}
         </nav>
 
-        <Timer />
+        <Timer initialTime={initialTime} />
 
         <aside>
-          <button className="cursor-pointer">
+          <button className="cursor-pointer" onClick={openModal}>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="24"
@@ -47,12 +77,102 @@ function App() {
           </button>
         </aside>
       </main>
+
+      <Modal
+        style={modalStyles}
+        isOpen={modalIsOpen}
+        onRequestClose={closeModal}
+      >
+        <div className="p-6">
+          <h2 className="text-2xl font-bold">Settings</h2>
+        </div>
+
+        <div className="h-[1px] bg-light-grey w-full"></div>
+        <div className="p-6 pb-12">
+          <h3 className="text-lg tracking-widest uppercase mb-4">
+            Time (Minutes)
+          </h3>
+          <div className="flex justify-between gap-4">
+            <NumberInput id="pomodoro" labelText="pomodoro" defaultValue={25} />
+            <NumberInput id="short" labelText="short break" defaultValue={15} />
+            <NumberInput id="long" labelText="long break" defaultValue={45} />
+          </div>
+        </div>
+      </Modal>
     </>
   );
 }
 
-function Timer() {
-  const [initialTime, _] = useState(10);
+function NumberInput({
+  labelText,
+  id,
+  defaultValue,
+}: {
+  labelText: string;
+  id: string;
+  defaultValue: number;
+}) {
+  const [value, setValue] = useState(defaultValue);
+
+  function increment() {
+    setValue(value + 1);
+  }
+
+  function decrement() {
+    setValue(value - 1);
+  }
+
+  function onChange(e: ChangeEvent<HTMLInputElement>) {
+    const newValue = e.target.value;
+    setValue(Number(newValue));
+  }
+
+  return (
+    <div className="flex-grow flex flex-col gap-2">
+      <label htmlFor={id} className="font-bold text-slate-400">
+        {labelText}
+      </label>
+
+      <div className="relative">
+        <input
+          id={id}
+          type="number"
+          min={1}
+          max={100}
+          value={value}
+          className="relative w-full bg-slate-200 h-10 rounded-lg px-4"
+          onChange={onChange}
+        />
+        <button onClick={increment} className="absolute top-0 right-2 h-fit">
+          <svg
+            className="scale-x-50 scale-y-[0.35]"
+            width="24"
+            height="24"
+            xmlns="http://www.w3.org/2000/svg"
+            fillRule="evenodd"
+            clipRule="evenodd"
+          >
+            <path d="M23.245 20l-11.245-14.374-11.219 14.374-.781-.619 12-15.381 12 15.391-.755.609z" />
+          </svg>
+        </button>
+        <button onClick={decrement} className="absolute bottom-0 right-2 h-fit">
+          <svg
+            className="scale-x-50 scale-y-[0.35]"
+            width="24"
+            height="24"
+            xmlns="http://www.w3.org/2000/svg"
+            fillRule="evenodd"
+            clipRule="evenodd"
+          >
+            <path d="M23.245 4l-11.245 14.374-11.219-14.374-.781.619 12 15.381 12-15.391-.755-.609z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function Timer({ initialTime }: { initialTime: number }) {
   const [time, setTime] = useState(initialTime);
   const [offset, setOffset] = useState(0);
   const [paused, setPaused] = useState(true);
@@ -66,6 +186,12 @@ function Timer() {
       path.current.setAttribute("stroke-dashoffset", "0");
     }
   }, []);
+
+  useEffect(() => {
+    setTime(initialTime);
+    setOffset(0);
+    setPaused(true);
+  }, [initialTime]);
 
   useEffect(() => {
     if (paused) return;
@@ -102,7 +228,6 @@ function Timer() {
 
   return (
     <div
-      onClick={() => setPaused(!paused)}
       className={`flex items-center justify-center w-[400px] aspect-square bg-gradient-to-br from-purp-dark to-[rgba(255,255,255,0.1)] rounded-full shadow-[-35px_-35px_50px_rgba(255,255,255,0.04),35px_35px_50px_rgba(0,0,0,0.2)]`}
     >
       <div className="relative w-[345px] aspect-square bg-purp-dark rounded-full flex items-center justify-center p-4">
@@ -122,11 +247,12 @@ function Timer() {
           />
         </svg>
         <h2 className="text-6xl text-light-grey">{clockTime}</h2>
-        {paused && (
-          <h3 className="absolute bottom-1/4 text-center text-light-grey tracking-widest">
-            PAUSED
-          </h3>
-        )}
+        <button
+          className="text-light-grey tracking-widest absolute bottom-1/4 hover:text-salmon"
+          onClick={() => setPaused(!paused)}
+        >
+          {paused ? "PAUSED" : "PLAY"}
+        </button>
       </div>
     </div>
   );
