@@ -1,6 +1,23 @@
-import { ChangeEvent, Dispatch, useEffect, useRef, useState } from "react";
+import { Dispatch, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Modal from "react-modal";
+import { create } from "zustand";
+
+interface ModalState {
+  pomodoro: number;
+  short: number;
+  long: number;
+  increment: (id: keyof ModalState) => void;
+  decrement: (id: keyof ModalState) => void;
+}
+
+const useModalState = create<ModalState>((set) => ({
+  pomodoro: 25,
+  short: 10,
+  long: 45,
+  increment: (id) => set((state) => ({ [id]: Number(state[id]) + 1 })),
+  decrement: (id) => set((state) => ({ [id]: Number(state[id]) - 1 })),
+}));
 
 Modal.setAppElement("#root");
 
@@ -17,18 +34,54 @@ const modalStyles = {
     transform: "translate(-50%, -50%)",
     minWidth: "500px",
     padding: "0px",
+    borderRadius: "20px",
+    overflow: "visible",
   },
 };
+
+interface Button {
+  id: string;
+  label: string;
+  duration: number;
+}
 
 function App() {
   const [activeButton, setActiveButton] = useState("pomodoro");
   const [initialTime, setInitialTime] = useState(10);
-  const [buttons, _] = useState([
-    { id: "pomodoro", label: "Pomodoro", duration: 25 },
-    { id: "short", label: "Short Break", duration: 10 },
-    { id: "long", label: "Long Break", duration: 45 },
+  const [buttons, setButtons] = useState<Button[]>([
+    { id: "pomodoro", label: "Pomodoro", duration: 25 * 60 },
+    { id: "short", label: "Short Break", duration: 10 * 60 },
+    { id: "long", label: "Long Break", duration: 45 * 60 },
   ]);
   const [modalIsOpen, setModalIsOpen] = useState(false);
+
+  const modalState = useModalState((state) => state);
+
+  function applyModalValues() {
+    const { pomodoro, short, long } = modalState;
+    setButtons((prevState) => {
+      return prevState.map((state) => {
+        switch (state.id) {
+          case "pomodoro":
+            state.duration = pomodoro * 60;
+            break;
+          case "short":
+            state.duration = short * 60;
+            break;
+          case "long":
+            state.duration = long * 60;
+            break;
+        }
+        return state;
+      });
+    });
+    setModalIsOpen(false);
+  }
+
+  useEffect(() => {
+    const currentButton = buttons.find((button) => button.id === activeButton);
+    if (currentButton) setInitialTime(currentButton.duration);
+  }, [buttons]);
 
   function openModal() {
     setModalIsOpen(true);
@@ -88,15 +141,24 @@ function App() {
         </div>
 
         <div className="h-[1px] bg-light-grey w-full"></div>
-        <div className="p-6 pb-12">
+        <div className="p-6 pb-0">
           <h3 className="text-lg tracking-widest uppercase mb-4">
             Time (Minutes)
           </h3>
           <div className="flex justify-between gap-4">
-            <NumberInput id="pomodoro" labelText="pomodoro" defaultValue={25} />
-            <NumberInput id="short" labelText="short break" defaultValue={15} />
-            <NumberInput id="long" labelText="long break" defaultValue={45} />
+            <NumberInput id="pomodoro" labelText="pomodoro" />
+            <NumberInput id="short" labelText="short break" />
+            <NumberInput id="long" labelText="long break" />
           </div>
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            className="rounded-full bg-salmon text-white px-10 py-4 translate-y-1/2 hover:text-purp-dark transition-colors"
+            onClick={applyModalValues}
+          >
+            Apply
+          </button>
         </div>
       </Modal>
     </>
@@ -106,26 +168,25 @@ function App() {
 function NumberInput({
   labelText,
   id,
-  defaultValue,
 }: {
   labelText: string;
-  id: string;
-  defaultValue: number;
+  id: keyof ModalState;
 }) {
-  const [value, setValue] = useState(defaultValue);
+  const { increment, decrement } = useModalState((state) => state);
+  const value: number = useModalState((state) => Number(state[id].valueOf()));
 
-  function increment() {
-    setValue(value + 1);
+  function incrementState() {
+    increment(id);
   }
 
-  function decrement() {
-    setValue(value - 1);
+  function decrementState() {
+    decrement(id);
   }
 
-  function onChange(e: ChangeEvent<HTMLInputElement>) {
-    const newValue = e.target.value;
-    setValue(Number(newValue));
-  }
+  // function onChange(e: ChangeEvent<HTMLInputElement>) {
+  //   const newValue = e.target.value;
+  //   setValue(Number(newValue));
+  // }
 
   return (
     <div className="flex-grow flex flex-col gap-2">
@@ -141,9 +202,12 @@ function NumberInput({
           max={100}
           value={value}
           className="relative w-full bg-slate-200 h-10 rounded-lg px-4"
-          onChange={onChange}
+          // onChange={onChange}
         />
-        <button onClick={increment} className="absolute top-0 right-2 h-fit">
+        <button
+          onClick={incrementState}
+          className="absolute top-0 right-2 h-fit"
+        >
           <svg
             className="scale-x-50 scale-y-[0.35]"
             width="24"
@@ -155,7 +219,10 @@ function NumberInput({
             <path d="M23.245 20l-11.245-14.374-11.219 14.374-.781-.619 12-15.381 12 15.391-.755.609z" />
           </svg>
         </button>
-        <button onClick={decrement} className="absolute bottom-0 right-2 h-fit">
+        <button
+          onClick={decrementState}
+          className="absolute bottom-0 right-2 h-fit"
+        >
           <svg
             className="scale-x-50 scale-y-[0.35]"
             width="24"
