@@ -519,13 +519,9 @@ function Timer({ initialTime }: { initialTime: number }) {
   };
 
   const clockTime = generateClockText();
-  const setColor = useModalState((state) => state.color);
-  const color =
-    setColor === "salmon"
-      ? "#FA6E72"
-      : setColor === "cyan"
-        ? "#22d3ee"
-        : "#c084fc";
+  const color = useAppState((state) => state.color);
+  const timerColor =
+    color === "salmon" ? "#FA6E72" : color === "cyan" ? "#22d3ee" : "#c084fc";
   return (
     <div
       className={`flex items-center justify-center w-[400px] aspect-square bg-gradient-to-br from-purp-dark to-[rgba(255,255,255,0.1)] rounded-full shadow-[-35px_-35px_50px_rgba(255,255,255,0.04),35px_35px_50px_rgba(0,0,0,0.2)]`}
@@ -539,7 +535,7 @@ function Timer({ initialTime }: { initialTime: number }) {
           <circle
             ref={path}
             fill="none"
-            stroke={color}
+            stroke={timerColor}
             strokeWidth="3"
             cx="50"
             cy="50"
@@ -552,9 +548,9 @@ function Timer({ initialTime }: { initialTime: number }) {
             {
               "text-light-grey tracking-widest absolute bottom-1/4": true,
             },
-            { "hover:text-salmon": setColor === "salmon" },
-            { "hover:text-cyan-400": setColor === "cyan" },
-            { "hover:text-purple-400": setColor === "purple" },
+            { "hover:text-salmon": color === "salmon" },
+            { "hover:text-cyan-400": color === "cyan" },
+            { "hover:text-purple-400": color === "purple" },
           )}
           onClick={() => setPaused(!paused)}
         >
