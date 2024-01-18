@@ -2,6 +2,7 @@ import { ChangeEvent, Dispatch, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 import Modal from "react-modal";
 import { create } from "zustand";
+import checkUrl from "./assets/check.svg";
 
 interface ModalState {
   pomodoro: number;
@@ -379,7 +380,7 @@ function ColorPicker() {
                 <>
                   <img
                     className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 scale-75"
-                    src="/check.svg"
+                    src={checkUrl}
                     alt="check symbol"
                   />
                 </>
@@ -547,7 +548,15 @@ function Timer({ initialTime }: { initialTime: number }) {
         </svg>
         <h2 className="text-6xl text-light-grey">{clockTime}</h2>
         <button
-          className="text-light-grey tracking-widest absolute bottom-1/4 hover:text-salmon"
+          className={clsx(
+            {
+              "text-light-grey tracking-widest absolute bottom-1/4 hover:text-salmon":
+                true,
+            },
+            { "hover:text-salmon": setColor === "salmon" },
+            { "hover:text-cyan-400": setColor === "cyan" },
+            { "hover:text-purple-400": setColor === "purple" },
+          )}
           onClick={() => setPaused(!paused)}
         >
           {paused ? "PAUSED" : "PLAY"}
