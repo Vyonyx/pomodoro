@@ -550,8 +550,7 @@ function Timer({ initialTime }: { initialTime: number }) {
         <button
           className={clsx(
             {
-              "text-light-grey tracking-widest absolute bottom-1/4 hover:text-salmon":
-                true,
+              "text-light-grey tracking-widest absolute bottom-1/4": true,
             },
             { "hover:text-salmon": setColor === "salmon" },
             { "hover:text-cyan-400": setColor === "cyan" },
