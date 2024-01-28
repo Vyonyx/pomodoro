@@ -52,8 +52,8 @@ function App() {
   );
 
   const [activeButton, setActiveButton] = useState("pomodoro");
-  const [initialTime, setInitialTime] = useState(10);
-  const [buttons, _] = useState<Button[]>([
+  const [initialTime, setInitialTime] = useState(pomodoro);
+  const [buttons, setButtons] = useState<Button[]>([
     { id: "pomodoro", label: "Pomodoro", duration: pomodoro * 60 },
     { id: "short", label: "Short Break", duration: short * 60 },
     { id: "long", label: "Long Break", duration: long * 60 },
@@ -71,6 +71,14 @@ function App() {
 
     setModalIsOpen(false);
   }
+
+  useEffect(() => {
+    setButtons([
+      { id: "pomodoro", label: "Pomodoro", duration: pomodoro * 60 },
+      { id: "short", label: "Short Break", duration: short * 60 },
+      { id: "long", label: "Long Break", duration: long * 60 },
+    ]);
+  }, [pomodoro, short, long]);
 
   useEffect(() => {
     const currentButton = buttons.find((button) => button.id === activeButton);
@@ -231,10 +239,11 @@ function FontPicker() {
                 htmlFor={key}
                 className={clsx(
                   {
-                    "w-10 h-10 rounded-full text-slate-800 bg-slate-200 text-md inline-grid place-items-center":
+                    "w-10 h-10 rounded-full text-md inline-grid place-items-center":
                       true,
                   },
                   { "text-slate-200 bg-slate-800": isActive },
+                  { "text-slate-800 bg-slate-200": !isActive },
                   { "not-italic": key === "type1" },
                   { "italic": key === "type2" },
                   { "font-bold": key === "type3" },
@@ -368,6 +377,7 @@ function NumberInput({
           min={1}
           max={100}
           value={value}
+          onChange={() => {}}
           className="relative w-full bg-slate-200 h-10 rounded-lg px-4"
         />
         <button
