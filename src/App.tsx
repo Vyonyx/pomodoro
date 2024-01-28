@@ -1,20 +1,9 @@
-import { ChangeEvent, Dispatch, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
+import { ChangeEvent, Dispatch, useEffect, useRef, useState } from "react";
 import Modal from "react-modal";
 import { create } from "zustand";
 import checkUrl from "./assets/check.svg";
-
-interface ModalState {
-  pomodoro: number;
-  short: number;
-  long: number;
-  color: string;
-  font: string;
-  setColor: (newColor: string) => void;
-  setFont: (newFont: string) => void;
-  increment: (id: keyof ModalState) => void;
-  decrement: (id: keyof ModalState) => void;
-}
+import { AppState, Button, InputColors, InputFonts, ModalState } from "./types";
 
 const useModalState = create<ModalState>((set) => ({
   pomodoro: 25,
@@ -27,15 +16,6 @@ const useModalState = create<ModalState>((set) => ({
   increment: (id) => set((state) => ({ [id]: Number(state[id]) + 1 })),
   decrement: (id) => set((state) => ({ [id]: Number(state[id]) - 1 })),
 }));
-
-interface AppState {
-  pomodoro: number;
-  short: number;
-  long: number;
-  color: string;
-  font: string;
-  setValue: (key: keyof AppState, value: number | string) => void;
-}
 
 const useAppState = create<AppState>((set) => ({
   pomodoro: 25,
@@ -66,12 +46,6 @@ const modalStyles = {
   },
 };
 
-interface Button {
-  id: string;
-  label: string;
-  duration: number;
-}
-
 function App() {
   const { pomodoro, short, long, color, setValue } = useAppState(
     (state) => state,
@@ -95,22 +69,6 @@ function App() {
     setValue("color", color);
     setValue("font", font);
 
-    // setButtons((prevState) => {
-    //   return prevState.map((state) => {
-    //     switch (state.id) {
-    //       case "pomodoro":
-    //         state.duration = pomodoro * 60;
-    //         break;
-    //       case "short":
-    //         state.duration = short * 60;
-    //         break;
-    //       case "long":
-    //         state.duration = long * 60;
-    //         break;
-    //     }
-    //     return state;
-    //   });
-    // });
     setModalIsOpen(false);
   }
 
@@ -224,22 +182,6 @@ function App() {
   );
 }
 
-interface InputAttributes {
-  checked: boolean;
-}
-
-interface InputColors {
-  "salmon": InputAttributes;
-  "cyan": InputAttributes;
-  "purple": InputAttributes;
-}
-
-interface InputFonts {
-  "type1": InputAttributes;
-  "type2": InputAttributes;
-  "type3": InputAttributes;
-}
-
 function FontPicker() {
   const font = useAppState((state) => state.font);
   const setFont = useModalState((state) => state.setFont);
@@ -293,6 +235,9 @@ function FontPicker() {
                       true,
                   },
                   { "text-slate-200 bg-slate-800": isActive },
+                  { "not-italic": key === "type1" },
+                  { "italic": key === "type2" },
+                  { "font-bold": key === "type3" },
                 )}
               >
                 Aa
@@ -410,11 +355,6 @@ function NumberInput({
     decrement(id);
   }
 
-  // function onChange(e: ChangeEvent<HTMLInputElement>) {
-  //   const newValue = e.target.value;
-  //   setValue(Number(newValue));
-  // }
-
   return (
     <div className="flex-grow flex flex-col gap-2">
       <label htmlFor={id} className="font-bold text-slate-400">
@@ -429,7 +369,6 @@ function NumberInput({
           max={100}
           value={value}
           className="relative w-full bg-slate-200 h-10 rounded-lg px-4"
-          // onChange={onChange}
         />
         <button
           onClick={incrementState}
@@ -519,7 +458,7 @@ function Timer({ initialTime }: { initialTime: number }) {
   };
 
   const clockTime = generateClockText();
-  const color = useAppState((state) => state.color);
+  const { color, font } = useAppState((state) => state);
   const timerColor =
     color === "salmon" ? "#FA6E72" : color === "cyan" ? "#22d3ee" : "#c084fc";
   return (
@@ -542,7 +481,16 @@ function Timer({ initialTime }: { initialTime: number }) {
             r="48"
           />
         </svg>
-        <h2 className="text-6xl text-light-grey">{clockTime}</h2>
+        <h2
+          className={clsx(
+            { "text-6xl text-light-grey": true },
+            { "not-italic": font === "type1" },
+            { "italic": font === "type2" },
+            { "font-bold": font === "type3" },
+          )}
+        >
+          {clockTime}
+        </h2>
         <button
           className={clsx(
             {
@@ -551,6 +499,9 @@ function Timer({ initialTime }: { initialTime: number }) {
             { "hover:text-salmon": color === "salmon" },
             { "hover:text-cyan-400": color === "cyan" },
             { "hover:text-purple-400": color === "purple" },
+            { "not-italic": font === "type1" },
+            { "italic": font === "type2" },
+            { "font-bold": font === "type3" },
           )}
           onClick={() => setPaused(!paused)}
         >
@@ -572,7 +523,7 @@ function PomodoroButton({
   active?: string;
   click: Dispatch<React.SetStateAction<string>>;
 }) {
-  const color = useAppState((state) => state.color);
+  const { color, font } = useAppState((state) => state);
   return (
     <button
       onClick={() => click(id)}
@@ -581,6 +532,9 @@ function PomodoroButton({
         { "text-purp-dark bg-salmon": id === active && color === "salmon" },
         { "text-purp-dark bg-cyan-400": id === active && color === "cyan" },
         { "text-purp-dark bg-purple-400": id === active && color === "purple" },
+        { "not-italic": font === "type1" },
+        { "italic": font === "type2" },
+        { "font-bold": font === "type3" },
       )}
     >
       {label}
